@@ -53,6 +53,7 @@ trait Fs2DataModule extends ScalaModule with ScalafmtModule {
 object csv extends Cross[CsvModule](scala212, scala213)
 
 class CsvModule(val crossScalaVersion: String) extends Fs2DataModule with CrossScalaModule with PublishModule {
+  outer =>
 
   def publishVersion = fs2DataVersion
 
@@ -67,6 +68,27 @@ class CsvModule(val crossScalaVersion: String) extends Fs2DataModule with CrossS
       versionControl = VersionControl.github("satabin", "fs2-data"),
       developers = Seq(fs2DataDeveloper)
     )
+
+  object generic extends Fs2DataModule with PublishModule {
+    def scalaVersion = outer.scalaVersion
+    def moduleDeps = Seq(outer)
+    def ivyDeps = Agg(ivy"com.chuusai::shapeless:2.3.3")
+
+    def publishVersion = fs2DataVersion
+
+    def artifactName = "fs2-data-csv-generic"
+
+    def pomSettings =
+      PomSettings(
+        description = "Utilities for transforming CSV rows to Scala values in a streaming fashion",
+        organization = "org.gnieh",
+        url = fs2DataUrl,
+        licenses = Seq(fs2DataLicense),
+        versionControl = VersionControl.github("satabin", "fs2-data"),
+        developers = Seq(fs2DataDeveloper)
+      )
+
+  }
 
   object test extends Fs2DataTests
 

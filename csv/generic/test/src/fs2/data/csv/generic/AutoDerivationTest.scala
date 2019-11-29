@@ -16,7 +16,7 @@
 package fs2.data.csv.generic
 
 import cats.data.NonEmptyList
-import fs2.data.csv.{CsvRow, CsvRowDecoder, RowDecoder}
+import fs2.data.csv.{CellDecoder, CsvRow, CsvRowDecoder, RowDecoder}
 import org.scalatest._
 
 class AutoDerivationTest extends FlatSpec with Matchers {
@@ -25,6 +25,28 @@ class AutoDerivationTest extends FlatSpec with Matchers {
   val plainRow = CsvRow.fromNel(NonEmptyList.of("1", "test", "42"))
 
   case class Test(i: Int, s: String, j: Int)
+
+  sealed trait State
+  case object On extends State
+  case object Off extends State
+
+  "auto derivation for CellDecoder" should "work properly for a simple sealed trait enum (importing auto._)" in {
+    import auto._
+    CellDecoder[State].apply("On") shouldBe Right(On)
+    CellDecoder[State].apply("Off") shouldBe Right(Off)
+  }
+
+  it should "work properly for a simple sealed trait enum (importing auto.cell._)" in {
+    import auto.cell._
+    CellDecoder[State].apply("On") shouldBe Right(On)
+    CellDecoder[State].apply("Off") shouldBe Right(Off)
+  }
+
+  it should "prefer custom decoders over derived ones" in {
+    import auto._
+    implicit val custom: CellDecoder[State] = _ => Right(On)
+    CellDecoder[State].apply("Off") shouldBe Right(On)
+  }
 
   "auto derivation for CsvRowDecoder" should "work properly for a simple case class (importing auto._)" in {
     import auto._
@@ -47,7 +69,7 @@ class AutoDerivationTest extends FlatSpec with Matchers {
     RowDecoder[Test].apply(plainRow.values) shouldBe Right(Test(1, "test", 42))
   }
 
-  it should "work properly for a simple case class (importing auto.csvrow._)" in {
+  it should "work properly for a simple case class (importing auto.row._)" in {
     import auto.row._
     RowDecoder[Test].apply(plainRow.values) shouldBe Right(Test(1, "test", 42))
   }

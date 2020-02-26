@@ -21,8 +21,8 @@ import org.scalatest._
 
 class AutoDerivationTest extends FlatSpec with Matchers {
 
-  val csvRow = new CsvRow(NonEmptyList.of("1", "test", "42"), Some(NonEmptyList.of("i", "s", "j")))
-  val plainRow = CsvRow.fromNel(NonEmptyList.of("1", "test", "42"))
+  val csvRow = new CsvRow(NonEmptyList.of("1", "test", "42"), NonEmptyList.of("i", "s", "j"))
+  val plainRow = NonEmptyList.of("1", "test", "42")
 
   case class Test(i: Int, s: String, j: Int)
 
@@ -48,18 +48,18 @@ class AutoDerivationTest extends FlatSpec with Matchers {
 
   "auto derivation for RowDecoder" should "work properly for a simple case class (importing auto._)" in {
     import auto._
-    RowDecoder[Test].apply(plainRow.values) shouldBe Right(Test(1, "test", 42))
+    RowDecoder[Test].apply(plainRow) shouldBe Right(Test(1, "test", 42))
   }
 
   it should "work properly for a simple case class (importing auto.csvrow._)" in {
     import auto.row._
-    RowDecoder[Test].apply(plainRow.values) shouldBe Right(Test(1, "test", 42))
+    RowDecoder[Test].apply(plainRow) shouldBe Right(Test(1, "test", 42))
   }
 
   it should "prefer custom decoders over derived ones" in {
     import auto._
     implicit val custom: RowDecoder[Test] = _ => Right(Test(0, "", 0))
-    RowDecoder[Test].apply(plainRow.values) shouldBe Right(Test(0, "", 0))
+    RowDecoder[Test].apply(plainRow) shouldBe Right(Test(0, "", 0))
   }
 
   "auto derivation for coproduct cells" should "work out of the box for enum-style sealed traits" in {

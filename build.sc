@@ -18,6 +18,7 @@ val scala213 = "2.13.2"
 val fs2Version = "2.3.0"
 val circeVersion = "0.13.0"
 val shapelessVersion = "2.3.3"
+val magnoliaVersion = "0.16.0"
 
 val fs2DataVersion = "0.7.0-SNAPSHOT"
 
@@ -101,7 +102,47 @@ class CsvModule(val crossScalaVersion: String) extends Fs2DataModule with CrossS
 
     def pomSettings =
       PomSettings(
-        description = "Generic CSV row decoder generation",
+        description = "Generic CSV row codec derivation using shapeless",
+        organization = "org.gnieh",
+        url = fs2DataUrl,
+        licenses = Seq(fs2DataLicense),
+        versionControl = VersionControl.github("satabin", "fs2-data"),
+        developers = Seq(fs2DataDeveloper)
+      )
+
+    object test extends Fs2DataTests
+
+  }
+
+  object magnolia extends Fs2DataModule with PublishModule {
+    def scalaVersion = outer.scalaVersion
+    def moduleDeps = Seq(outer)
+    def ivyDeps = Agg(
+      ivy"com.propensive::magnolia:$magnoliaVersion",
+      ivy"org.scala-lang:scala-reflect:${scalaVersion()}"
+    )
+
+    override def scalacOptions = T {
+      if (scalaVersion().startsWith("2.13"))
+        Seq("-Ymacro-annotations")
+      else
+        Seq()
+    }
+
+    override def scalacPluginIvyDeps = T {
+      if (scalaVersion().startsWith("2.13"))
+        super.scalacPluginIvyDeps()
+      else
+        super.scalacPluginIvyDeps() ++ Agg(ivy"org.scalamacros:::paradise:2.1.1")
+    }
+
+    def publishVersion = fs2DataVersion
+
+    def artifactName = "fs2-data-csv-magnolia"
+
+    def pomSettings =
+      PomSettings(
+        description = "Generic CSV row codec derivation based on Magnolia",
         organization = "org.gnieh",
         url = fs2DataUrl,
         licenses = Seq(fs2DataLicense),
